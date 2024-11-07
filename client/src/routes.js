@@ -8,4 +8,5 @@ export const apiUrl = "http://localhost:3001/api/v1";
 
 export const endpoints = {
   login: "/user/login",
+  profile: "/user/profile",
 };
