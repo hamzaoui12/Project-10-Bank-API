@@ -1,16 +1,31 @@
-import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
 
 import { apiUrl, endpoints, routes } from "@/routes";
+import { transactions } from "@/utils/transactions";
+import { Transactions } from "@/components/ui/Transactions";
+import { setUserData } from "@/utils/store";
 
 const User = () => {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
   const token = useSelector((state) => state.session.token);
   const [edit, setEdit] = useState(false);
-  const [user, setUser] = useState({});
+  const [localUser, setLocalUser] = useState({ ...user });
+  const [error, setError] = useState(null);
 
   const handleEditName = () => {
+    setLocalUser({ ...user });
     setEdit((prev) => !prev);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setLocalUser((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (event) => {
@@ -23,41 +38,25 @@ const User = () => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: localUser.firstName,
+        lastName: localUser.lastName,
       }),
     });
 
     if (!response.ok) {
-      throw new Error("Impossible de mettre à jour les informations");
+      setError("Impossible de mettre à jour les informations");
+      return;
     }
 
+    const newUserData = await response.json();
     setEdit(false);
+    dispatch(setUserData(newUserData.body));
   };
 
-  useEffect(() => {
-    fetch(apiUrl + endpoints.profile, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: null,
-    }).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(
-          "Impossible de récupérer les informations de l'utilisateur"
-        );
-      }
-
-      const data = await response.json();
-      setUser(data.body);
-    });
-  }, [setUser, token]);
-
   if (!token) {
-    return <Navigate to={routes.signIn} />;
+    return <Navigate to={routes.home} />;
   }
+
   return (
     <main className="flex flex-col items-center bg-[#12002b] h-full">
       {edit ? (
@@ -72,10 +71,8 @@ const User = () => {
                 id="firstName"
                 name="firstName"
                 className="p-2 text-lg border border-gray-600"
-                value={user.firstName}
-                onChange={(e) =>
-                  setUser({ ...user, firstName: e.target.value })
-                }
+                value={localUser.firstName || ""}
+                onChange={handleInputChange}
               />
 
               <input
@@ -83,8 +80,8 @@ const User = () => {
                 id="lastName"
                 name="lastName"
                 className="p-2 text-lg border border-gray-600"
-                value={user.lastName}
-                onChange={(e) => setUser({ ...user, lastName: e.target.value })}
+                value={localUser.lastName || ""}
+                onChange={handleInputChange}
               />
             </div>
             <div className="grid grid-cols-2 gap-4 w-1/2 mx-auto">
@@ -114,59 +111,23 @@ const User = () => {
           </div>
           <button
             className="bg-[#00bc77] text-white font-bold py-2 px-4 mt-4 border border-[#00bc77]"
-            onClick={handleEditName}
+            onClick={(event) => {
+              event.preventDefault();
+              handleEditName();
+            }}
           >
             Edit Name
           </button>
         </div>
       )}
 
+      {error && <p className="text-red-500">{error}</p>}
+
       <h2 className="sr-only">Accounts</h2>
 
-      <section className="bg-white border border-black w-[80%] mx-auto mb-8 p-6 flex flex-col text-left box-border md:flex-row">
-        <div className="flex-1 w-full">
-          <h3 className="text-base font-normal m-0 p-0">
-            Argent Bank Checking (x8349)
-          </h3>
-          <p className="text-4xl font-bold m-0">$2,082.79</p>
-          <p className="m-0">Available Balance</p>
-        </div>
-        <div className="w-full md:w-auto mt-4 md:mt-0">
-          <button className="w-full md:w-[200px] py-2 text-lg font-bold bg-[#00bc77] text-white border border-[#00bc77]">
-            View transactions
-          </button>
-        </div>
-      </section>
-
-      <section className="bg-white border border-black w-[80%] mx-auto mb-8 p-6 flex flex-col text-left box-border md:flex-row">
-        <div className="flex-1 w-full">
-          <h3 className="text-base font-normal m-0 p-0">
-            Argent Bank Savings (x6712)
-          </h3>
-          <p className="text-4xl font-bold m-0">$10,928.42</p>
-          <p className="m-0">Available Balance</p>
-        </div>
-        <div className="w-full md:w-auto mt-4 md:mt-0">
-          <button className="w-full md:w-[200px] py-2 text-lg font-bold bg-[#00bc77] text-white border border-[#00bc77]">
-            View transactions
-          </button>
-        </div>
-      </section>
-
-      <section className="bg-white border border-black w-[80%] mx-auto mb-8 p-6 flex flex-col text-left box-border md:flex-row">
-        <div className="flex-1 w-full">
-          <h3 className="text-base font-normal m-0 p-0">
-            Argent Bank Credit Card (x8349)
-          </h3>
-          <p className="text-4xl font-bold m-0">$184.30</p>
-          <p className="m-0">Current Balance</p>
-        </div>
-        <div className="w-full md:w-auto mt-4 md:mt-0">
-          <button className="w-full md:w-[200px] py-2 text-lg font-bold bg-[#00bc77] text-white border border-[#00bc77]">
-            View transactions
-          </button>
-        </div>
-      </section>
+      {transactions.map((transaction, index) => {
+        return <Transactions key={index} {...transaction} />;
+      })}
     </main>
   );
 };

@@ -1,14 +1,16 @@
-import { apiUrl, endpoints, routes } from "@/routes";
-import { signIn } from "@/utils/store";
 import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
+
+import { apiUrl, endpoints, routes } from "@/routes";
+import { signIn } from "@/utils/store";
 
 const SignIn = () => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.session.token);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -29,7 +31,8 @@ const SignIn = () => {
     });
 
     if (!response.ok) {
-      throw new Error("Les identifiants sont incorrects");
+      setError("Les identifiants sont incorrects");
+      return;
     }
 
     const data = await response.json();
@@ -71,12 +74,13 @@ const SignIn = () => {
             </label>
           </div>
           <button
-            className="w-full py-2 text-lg font-bold mt-4 bg-[#00bc77] text-white border border-[#00bc77]"
+            className="w-full py-2 text-lg font-bold mt-4 bg-[#00bc77] text-white border border-[#00bc77] underline"
             type="submit"
           >
             Sign In
           </button>
         </form>
+        {error && <p className="text-red-500 text-center">{error}</p>}
       </section>
     </main>
   );

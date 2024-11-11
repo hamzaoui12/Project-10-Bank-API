@@ -9,7 +9,8 @@ import { Layout } from "@/components/layout/Layout.jsx";
 import Home from "@/pages/home.jsx";
 import { routes } from "@/routes.js";
 import SignIn from "@/pages/sign-in";
-import User from "./pages/user";
+import User from "@/pages/user";
+import Error from "@/pages/error";
 
 const router = createBrowserRouter([
   {
@@ -27,6 +28,10 @@ const router = createBrowserRouter([
       {
         path: routes.user,
         element: <User />,
+      },
+      {
+        path: "*",
+        element: <Error />,
       },
     ],
   },
