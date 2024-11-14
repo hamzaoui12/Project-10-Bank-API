@@ -151,7 +151,7 @@ definitions:
         description: Additional notes regarding the transaction
       description:
         type: string
-        description: A short description of the transaction (e.g., 'Golden Sun Bakery').
+        description: A short description of the transaction.
       date:
         type: string
         format: date
